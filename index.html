@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --bg-color: #ffffff;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --header-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+        
+        [data-bs-theme="dark"] {
+            --primary-color: #0d6efd;
+            --secondary-color: #adb5bd;
+            --bg-color: #212529;
+            --text-color: #e9ecef;
+            --card-bg: #2c3034;
+            --header-bg: #343a40;
+            --border-color: #495057;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        
+        .card-header, .card-footer {
+            background-color: var(--header-bg);
+            border-color: var(--border-color);
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        .product-card {
+            transition: transform 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        
+        .btn-action {
+            margin-right: 5px;
+        }
+        
+        .language-selector {
+            min-width: 120px;
+        }
+        
+        .theme-switch {
+            cursor: pointer;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animated {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-box-open me-2"></i>
+                <span data-i18n="appTitle">Product Management</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <!-- Language Selector -->
+                <div class="dropdown me-3">
+                    <button class="btn btn-outline-secondary dropdown-toggle language-selector" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe me-2"></i>
+                        <span id="currentLanguage">English</span>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                        <li><a class="dropdown-item" href="#" data-lang="en"><i class="fas fa-flag me-2"></i> English</a></li>
+                        <li><a class="dropdown-item" href="#" data-lang="es"><i class="fas fa-flag me-2"></i> Español</a></li>
+                        <li><a class="dropdown-item" href="#" data-lang="de"><i class="fas fa-flag me-2"></i> Deutsch</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Dark Mode Toggle -->
+                <div class="theme-switch form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="darkModeToggle">
+                    <label class="form-check-label ms-2" for="darkModeToggle">
+                        <i class="fas fa-moon"></i>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold text-primary" data-i18n="pageTitle">Product Management</h1>
+                <p class="lead" data-i18n="pageSubtitle">Add, edit, and manage your products with this simple interface</p>
+            </div>
+            <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="fas fa-plus me-2"></i>
+                    <span data-i18n="addNewProduct">Add New Product</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search and filter -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control" data-i18n-placeholder="searchPlaceholder" placeholder="Search products...">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden" data-i18n="loading">Loading...</span>
+            </div>
+            <p class="mt-2" data-i18n="loadingProducts">Loading products...</p>
+        </div>
+        
+        <!-- Alert for messages -->
+        <div id="alertMessage" class="alert d-none" role="alert"></div>
+        
+        <!-- Product List -->
+        <div id="productList" class="row"></div>
+        
+        <!-- No products message -->
+        <div id="noProducts" class="text-center py-5 d-none">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <h3 data-i18n="noProductsTitle">No products found</h3>
+            <p data-i18n="noProductsText">Start by adding a new product</p>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addProductModalLabel" data-i18n="addProductTitle">Add New Product</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm">
+                        <div class="mb-3">
+                            <label for="productName" class="form-label" data-i18n="productNameLabel">Product Name</label>
+                            <input type="text" class="form-control" id="productName" required>
+                        </div>
+                        <input type="hidden" id="editProductId" value="">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveProductBtn" data-i18n="saveProduct">Save Product</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" data-i18n="confirmDelete">Confirm Delete</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p data-i18n="deleteConfirmationText">Are you sure you want to delete this product?</p>
+                    <p id="deleteProductName" class="fw-bold"></p>
+                    <input type="hidden" id="deleteProductId" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="cancel">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn" data-i18n="delete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap & JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API endpoint - will be replaced by actual backend URL
+        const API_URL = 'http://localhost:5000/api/products';
+        
+        // DOM Elements
+        const productList = document.getElementById('productList');
+        const addProductForm = document.getElementById('addProductForm');
+        const productNameInput = document.getElementById('productName');
+        const editProductIdInput = document.getElementById('editProductId');
+        const saveProductBtn = document.getElementById('saveProductBtn');
+        const deleteProductIdInput = document.getElementById('deleteProductId');
+        const deleteProductName = document.getElementById('deleteProductName');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const noProducts = document.getElementById('noProducts');
+        const alertMessage = document.getElementById('alertMessage');
+        const searchInput = document.getElementById('searchInput');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        
+        // Bootstrap modal objects
+        let addModal, deleteModal;
+        
+        // Current language (default: en)
+        let currentLanguage = 'en';
+        
+        // Translations
+        const translations = {
+            en: {
+                appTitle: 'Product Management',
+                pageTitle: 'Product Management',
+                pageSubtitle: 'Add, edit, and manage your products with this simple interface',
+                addNewProduct: 'Add New Product',
+                searchPlaceholder: 'Search products...',
+                loading: 'Loading...',
+                loadingProducts: 'Loading products...',
+                noProductsTitle: 'No products found',
+                noProductsText: 'Start by adding a new product',
+                noMatchingProductsTitle: 'No matching products',
+                noMatchingProductsText: 'Try a different search term',
+                addProductTitle: 'Add New Product',
+                editProductTitle: 'Edit Product',
+                productNameLabel: 'Product Name',
+                cancel: 'Cancel',
+                saveProduct: 'Save Product',
+                confirmDelete: 'Confirm Delete',
+                deleteConfirmationText: 'Are you sure you want to delete this product?',
+                delete: 'Delete',
+                productId: 'ID',
+                editAction: 'Edit',
+                deleteAction: 'Delete',
+                productAdded: 'Product added successfully',
+                productUpdated: 'Product updated successfully',
+                productDeleted: 'Product deleted successfully',
+                errorFetchingProducts: 'Failed to fetch products',
+                errorSavingProduct: 'Failed to save product',
+                errorDeletingProduct: 'Failed to delete product',
+                enterProductName: 'Please enter a product name'
+            },
+            es: {
+                appTitle: 'Gestión de Productos',
+                pageTitle: 'Gestión de Productos',
+                pageSubtitle: 'Añade, edita y gestiona tus productos con esta sencilla interfaz',
+                addNewProduct: 'Añadir Nuevo Producto',
+                searchPlaceholder: 'Buscar productos...',
+                loading: 'Cargando...',
+                loadingProducts: 'Cargando productos...',
+                noProductsTitle: 'No se encontraron productos',
+                noProductsText: 'Comienza añadiendo un nuevo producto',
+                noMatchingProductsTitle: 'No hay productos coincidentes',
+                noMatchingProductsText: 'Prueba un término de búsqueda diferente',
+                addProductTitle: 'Añadir Nuevo Producto',
+                editProductTitle: 'Editar Producto',
+                productNameLabel: 'Nombre del Producto',
+                cancel: 'Cancelar',
+                saveProduct: 'Guardar Producto',
+                confirmDelete: 'Confirmar Eliminación',
+                deleteConfirmationText: '¿Estás seguro de que quieres eliminar este producto?',
+                delete: 'Eliminar',
+                productId: 'ID',
+                editAction: 'Editar',
+                deleteAction: 'Eliminar',
+                productAdded: 'Producto añadido correctamente',
+                productUpdated: 'Producto actualizado correctamente',
+                productDeleted: 'Producto eliminado correctamente',
+                errorFetchingProducts: 'Error al cargar los productos',
+                errorSavingProduct: 'Error al guardar el producto',
+                errorDeletingProduct: 'Error al eliminar el producto',
+                enterProductName: 'Por favor, introduce un nombre de producto'
+            },
+            de: {
+                appTitle: 'Produktverwaltung',
+                pageTitle: 'Produktverwaltung',
+                pageSubtitle: 'Fügen Sie Produkte hinzu, bearbeiten und verwalten Sie sie mit dieser einfachen Oberfläche',
+                addNewProduct: 'Neues Produkt hinzufügen',
+                searchPlaceholder: 'Produkte suchen...',
+                loading: 'Laden...',
+                loadingProducts: 'Produkte werden geladen...',
+                noProductsTitle: 'Keine Produkte gefunden',
+                noProductsText: 'Beginnen Sie, indem Sie ein neues Produkt hinzufügen',
+                noMatchingProductsTitle: 'Keine passenden Produkte',
+                noMatchingProductsText: 'Versuchen Sie einen anderen Suchbegriff',
+                addProductTitle: 'Neues Produkt hinzufügen',
+                editProductTitle: 'Produkt bearbeiten',
+                productNameLabel: 'Produktname',
+                cancel: 'Abbrechen',
+                saveProduct: 'Produkt speichern',
+                confirmDelete: 'Löschen bestätigen',
+                deleteConfirmationText: 'Sind Sie sicher, dass Sie dieses Produkt löschen möchten?',
+                delete: 'Löschen',
+                productId: 'ID',
+                editAction: 'Bearbeiten',
+                deleteAction: 'Löschen',
+                productAdded: 'Produkt erfolgreich hinzugefügt',
+                productUpdated: 'Produkt erfolgreich aktualisiert',
+                productDeleted: 'Produkt erfolgreich gelöscht',
+                errorFetchingProducts: 'Fehler beim Laden der Produkte',
+                errorSavingProduct: 'Fehler beim Speichern des Produkts',
+                errorDeletingProduct: 'Fehler beim Löschen des Produkts',
+                enterProductName: 'Bitte geben Sie einen Produktnamen ein'
+            }
+        };
+        
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Bootstrap modals
+            addModal = new bootstrap.Modal(document.getElementById('addProductModal'));
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+            
+            // Load products on page load
+            fetchProducts();
+            
+            // Event Listeners
+            saveProductBtn.addEventListener('click', saveProduct);
+            confirmDeleteBtn.addEventListener('click', deleteProduct);
+            searchInput.addEventListener('input', filterProducts);
+            
+            // Dark mode toggle
+            darkModeToggle.addEventListener('change', toggleDarkMode);
+            
+            // Check system preference for dark mode
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                darkModeToggle.checked = true;
+                toggleDarkMode();
+            }
+            
+            // Language selector
+            document.querySelectorAll('[data-lang]').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const lang = e.target.closest('[data-lang]').getAttribute('data-lang');
+                    changeLanguage(lang);
+                });
+            });
+            
+            // Reset form when modal is hidden
+            document.getElementById('addProductModal').addEventListener('hidden.bs.modal', () => {
+                addProductForm.reset();
+                editProductIdInput.value = '';
+                updateTranslation('addProductTitle', document.getElementById('addProductModalLabel'));
+            });
+            
+            // Initialize language
+            changeLanguage(currentLanguage);
+        });
+        
+        // Toggle dark mode
+        function toggleDarkMode() {
+            if (darkModeToggle.checked) {
+                document.documentElement.setAttribute('data-bs-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-bs-theme');
+            }
+        }
+        
+        // Change language
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            document.getElementById('currentLanguage').textContent = {
+                'en': 'English',
+                'es': 'Español',
+                'de': 'Deutsch'
+            }[lang];
+            
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                element.textContent = translations[lang][key] || key;
+            });
+            
+            // Update all placeholder texts
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                element.placeholder = translations[lang][key] || key;
+            });
+            
+            // If we're in edit mode, update the modal title
+            if (editProductIdInput.value) {
+                document.getElementById('addProductModalLabel').textContent = translations[lang]['editProductTitle'];
+            }
+        }
+        
+        // Get translation for a key
+        function getTranslation(key) {
+            return translations[currentLanguage][key] || key;
+        }
+        
+        // Update an element's text content with translation
+        function updateTranslation(key, element) {
+            element.textContent = getTranslation(key);
+        }
+        
+        // Fetch all products from API
+        async function fetchProducts() {
+            showLoading(true);
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(getTranslation('errorFetchingProducts'));
+                }
+                const products = await response.json();
+                renderProducts(products);
+            } catch (error) {
+                showAlert('danger', `${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Render products to the UI
+        function renderProducts(products) {
+            productList.innerHTML = '';
+            
+            if (products.length === 0) {
+                noProducts.classList.remove('d-none');
+                updateTranslation('noProductsTitle', noProducts.querySelector('h3'));
+                updateTranslation('noProductsText', noProducts.querySelector('p'));
+                return;
+            }
+            
+            noProducts.classList.add('d-none');
+            
+            products.forEach((product, index) => {
+                const productCard = document.createElement('div');
+                productCard.className = 'col-md-4 mb-4 animated';
+                productCard.style.animationDelay = `${index * 0.05}s`; 
+                productCard.innerHTML = `
+                    <div class="card product-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">${product.name}</h5>
+                            <p class="card-text text-muted">${getTranslation('productId')}: ${product.id}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <button class="btn btn-sm btn-outline-primary btn-action edit-btn" data-id="${product.id}" data-name="${product.name}">
+                                <i class="fas fa-edit"></i> ${getTranslation('editAction')}
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-action delete-btn" data-id="${product.id}" data-name="${product.name}">
+                                <i class="fas fa-trash"></i> ${getTranslation('deleteAction')}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                productList.appendChild(productCard);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    editProduct(btn.dataset.id, btn.dataset.name);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showDeleteConfirmation(btn.dataset.id, btn.dataset.name);
+                });
+            });
+        }
+        
+        // Save product (create or update)
+        async function saveProduct() {
+            const productName = productNameInput.value.trim();
+            const productId = editProductIdInput.value;
+            
+            if (!productName) {
+                showAlert('warning', getTranslation('enterProductName'));
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const url = productId ? `${API_URL}/${productId}` : API_URL;
+                const method = productId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: productName })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(getTranslation('errorSavingProduct'));
+                }
+                
+                showAlert('success', getTranslation(productId ? 'productUpdated' : 'productAdded'));
+                addModal.hide();
+                fetchProducts();
+            } catch (error) {
+                showAlert('danger', `${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Show edit product modal
+        function editProduct(id, name) {
+            document.getElementById('addProductModalLabel').textContent = getTranslation('editProductTitle');
+            productNameInput.value = name;
+            editProductIdInput.value = id;
+            addModal.show();
+        }
+        
+        // Show delete confirmation modal
+        function showDeleteConfirmation(id, name) {
+            deleteProductIdInput.value = id;
+            deleteProductName.textContent = name;
+            deleteModal.show();
+        }
+        
+        // Delete product
+        async function deleteProduct() {
+            const productId = deleteProductIdInput.value;
+            
+            showLoading(true);
+            deleteModal.hide();
+            
+            try {
+                const response = await fetch(`${API_URL}/${productId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(getTranslation('errorDeletingProduct'));
+                }
+                
+                showAlert('success', getTranslation('productDeleted'));
+                fetchProducts();
+            } catch (error) {
+                showAlert('danger', `${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Filter products based on search input
+        function filterProducts() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const productCards = document.querySelectorAll('.product-card');
+            
+            let visibleCount = 0;
+            
+            productCards.forEach(card => {
+                const parent = card.parentElement;
+                const productName = card.querySelector('.card-title').textContent.toLowerCase();
+                
+                if (productName.includes(searchTerm)) {
+                    parent.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    parent.style.display = 'none';
+                }
+            });
+            
+            if (visibleCount === 0) {
+                noProducts.classList.remove('d-none');
+                updateTranslation('noMatchingProductsTitle', noProducts.querySelector('h3'));
+                updateTranslation('noMatchingProductsText', noProducts.querySelector('p'));
+            } else {
+                noProducts.classList.add('d-none');
+            }
+        }
+        
+        // Show/hide loading indicator
+        function showLoading(show) {
+            loadingIndicator.classList.toggle('d-none', !show);
+        }
+        
+        // Show alert message
+        function showAlert(type, message) {
+            alertMessage.className = `alert alert-${type}`;
+            alertMessage.textContent = message;
+            alertMessage.classList.remove('d-none');
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                alertMessage.classList.add('d-none');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
