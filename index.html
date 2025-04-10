@@ -91,7 +91,6 @@
                 <span data-i18n="appTitle">Product Management</span>
             </a>
             <div class="d-flex align-items-center">
-                <!-- Language Selector -->
                 <div class="dropdown me-3">
                     <button class="btn btn-outline-secondary dropdown-toggle language-selector" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-globe me-2"></i>
@@ -104,7 +103,6 @@
                     </ul>
                 </div>
                 
-                <!-- Dark Mode Toggle -->
                 <div class="theme-switch form-check form-switch">
                     <input class="form-check-input" type="checkbox" id="darkModeToggle">
                     <label class="form-check-label ms-2" for="darkModeToggle">
@@ -129,7 +127,6 @@
             </div>
         </div>
 
-        <!-- Search and filter -->
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="input-group">
@@ -139,7 +136,6 @@
             </div>
         </div>
         
-        <!-- Loading indicator -->
         <div id="loadingIndicator" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden" data-i18n="loading">Loading...</span>
@@ -147,13 +143,10 @@
             <p class="mt-2" data-i18n="loadingProducts">Loading products...</p>
         </div>
         
-        <!-- Alert for messages -->
         <div id="alertMessage" class="alert d-none" role="alert"></div>
         
-        <!-- Product List -->
         <div id="productList" class="row"></div>
         
-        <!-- No products message -->
         <div id="noProducts" class="text-center py-5 d-none">
             <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
             <h3 data-i18n="noProductsTitle">No products found</h3>
@@ -161,7 +154,6 @@
         </div>
     </div>
 
-    <!-- Add Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -186,7 +178,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -207,10 +198,8 @@
         </div>
     </div>
 
-    <!-- Bootstrap & JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Script de inicialización
         window.APP_CONFIG = {
           API_URL: window.location.hostname === 'localhost' ? 
             'http://localhost:5000/api/products' : 
@@ -218,10 +207,8 @@
         };
       </script>
     <script>
-        // API endpoint - will be replaced by actual backend URL
         const API_URL = window.APP_CONFIG.API_URL;
         
-        // DOM Elements
         const productList = document.getElementById('productList');
         const addProductForm = document.getElementById('addProductForm');
         const productNameInput = document.getElementById('productName');
@@ -236,13 +223,10 @@
         const searchInput = document.getElementById('searchInput');
         const darkModeToggle = document.getElementById('darkModeToggle');
         
-        // Bootstrap modal objects
         let addModal, deleteModal;
         
-        // Current language (default: en)
         let currentLanguage = 'en';
         
-        // Translations
         const translations = {
             en: {
                 appTitle: 'Product Management',
@@ -339,30 +323,23 @@
             }
         };
         
-        // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize Bootstrap modals
             addModal = new bootstrap.Modal(document.getElementById('addProductModal'));
             deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
             
-            // Load products on page load
             fetchProducts();
             
-            // Event Listeners
             saveProductBtn.addEventListener('click', saveProduct);
             confirmDeleteBtn.addEventListener('click', deleteProduct);
             searchInput.addEventListener('input', filterProducts);
             
-            // Dark mode toggle
             darkModeToggle.addEventListener('change', toggleDarkMode);
             
-            // Check system preference for dark mode
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 darkModeToggle.checked = true;
                 toggleDarkMode();
             }
             
-            // Language selector
             document.querySelectorAll('[data-lang]').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -371,18 +348,15 @@
                 });
             });
             
-            // Reset form when modal is hidden
             document.getElementById('addProductModal').addEventListener('hidden.bs.modal', () => {
                 addProductForm.reset();
                 editProductIdInput.value = '';
                 updateTranslation('addProductTitle', document.getElementById('addProductModalLabel'));
             });
             
-            // Initialize language
             changeLanguage(currentLanguage);
         });
         
-        // Toggle dark mode
         function toggleDarkMode() {
             if (darkModeToggle.checked) {
                 document.documentElement.setAttribute('data-bs-theme', 'dark');
@@ -391,7 +365,6 @@
             }
         }
         
-        // Change language
         function changeLanguage(lang) {
             currentLanguage = lang;
             document.getElementById('currentLanguage').textContent = {
@@ -400,35 +373,29 @@
                 'de': 'Deutsch'
             }[lang];
             
-            // Update all elements with data-i18n attribute
             document.querySelectorAll('[data-i18n]').forEach(element => {
                 const key = element.getAttribute('data-i18n');
                 element.textContent = translations[lang][key] || key;
             });
             
-            // Update all placeholder texts
             document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
                 const key = element.getAttribute('data-i18n-placeholder');
                 element.placeholder = translations[lang][key] || key;
             });
             
-            // If we're in edit mode, update the modal title
             if (editProductIdInput.value) {
                 document.getElementById('addProductModalLabel').textContent = translations[lang]['editProductTitle'];
             }
         }
         
-        // Get translation for a key
         function getTranslation(key) {
             return translations[currentLanguage][key] || key;
         }
         
-        // Update an element's text content with translation
         function updateTranslation(key, element) {
             element.textContent = getTranslation(key);
         }
         
-        // Fetch all products from API
         async function fetchProducts() {
             showLoading(true);
             try {
@@ -445,7 +412,6 @@
             }
         }
         
-        // Render products to the UI
         function renderProducts(products) {
             productList.innerHTML = '';
             
@@ -481,7 +447,6 @@
                 productList.appendChild(productCard);
             });
             
-            // Add event listeners to edit and delete buttons
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     editProduct(btn.dataset.id, btn.dataset.name);
@@ -495,7 +460,6 @@
             });
         }
         
-        // Save product (create or update)
         async function saveProduct() {
             const productName = productNameInput.value.trim();
             const productId = editProductIdInput.value;
@@ -533,7 +497,6 @@
             }
         }
         
-        // Show edit product modal
         function editProduct(id, name) {
             document.getElementById('addProductModalLabel').textContent = getTranslation('editProductTitle');
             productNameInput.value = name;
@@ -541,14 +504,12 @@
             addModal.show();
         }
         
-        // Show delete confirmation modal
         function showDeleteConfirmation(id, name) {
             deleteProductIdInput.value = id;
             deleteProductName.textContent = name;
             deleteModal.show();
         }
         
-        // Delete product
         async function deleteProduct() {
             const productId = deleteProductIdInput.value;
             
@@ -573,7 +534,6 @@
             }
         }
         
-        // Filter products based on search input
         function filterProducts() {
             const searchTerm = searchInput.value.toLowerCase();
             const productCards = document.querySelectorAll('.product-card');
@@ -601,18 +561,15 @@
             }
         }
         
-        // Show/hide loading indicator
         function showLoading(show) {
             loadingIndicator.classList.toggle('d-none', !show);
         }
         
-        // Show alert message
         function showAlert(type, message) {
             alertMessage.className = `alert alert-${type}`;
             alertMessage.textContent = message;
             alertMessage.classList.remove('d-none');
             
-            // Auto-hide after 3 seconds
             setTimeout(() => {
                 alertMessage.classList.add('d-none');
             }, 3000);
